@@ -3,13 +3,13 @@
 from distutils.core import setup
 
 setup(
-    name = 'spy',
+    name = 'python-spy',
     version = '0.2.1',
     author = 'Seimei',
     author_email = 'seimeininja@gmail.com',
     description = 'Another Python Spider framework',
     url = 'https://github.com/seimei/python-spy',
-    packages = ['spy'],    
+    packages = ['python-spy'],    
     classifiers = [
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
