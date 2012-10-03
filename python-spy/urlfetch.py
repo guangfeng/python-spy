@@ -26,7 +26,7 @@ def post_form_fetch(url, data, char = ''):
                 s = f.read()
                 f.close()
                 if char:
-                    return s.decode(char).encode('utf-8')
+                    return s.decode(char, 'ignore').encode('utf-8')
                 else:
                     return s
                     
@@ -47,7 +47,8 @@ def post_form_fetch(url, data, char = ''):
 
 class DownOpener(urllib.FancyURLopener):
     user_agents = [
-        'Mozilla/5.0 (Windows; U; Windows NT 5.1; it; rv:1.8.1.11) Gecko/20071127 Firefox/2.0.0.11',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.1 (KHTML, like Gecko) Chrome/21.0.1180.89 Safari/537.1',
+        'Mozilla/5.0 (Windows; U; Windows NT 5.1; it; rv:1.8.1.11) Gecko/20091127 Firefox/6.0.0.11',
         'Opera/9.25 (Windows NT 5.1; U; en)',
         'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)',
         'Mozilla/5.0 (compatible; Konqueror/3.5; Linux) KHTML/3.5.5 (like Gecko) (Kubuntu)',
@@ -56,18 +57,26 @@ class DownOpener(urllib.FancyURLopener):
     ]
     version = choice(user_agents)
         
-def download_file(url,save):
+def download_file(url,save,proxy = None):
     host = urlparse.urlparse(url).hostname
     
     trycnt = 3
     for i in xrange(trycnt):
         try:
-            opener = urllib2.build_opener(urllib2.HTTPHandler,urllib2.HTTPCookieProcessor(_cook))
-            opener.addheaders = [('Host', host)]
-            opener.addheaders = [('User-Agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3')]
-            opener.addheaders = [('Referer',"http://%s/"%host)]
-            urllib2.install_opener(opener)
-            f = DownOpener()
+            #if proxy:
+            #    proxy_handler = urllib2.ProxyHandler({'http':proxy})
+            #    opener = urllib2.build_opener(proxy_handler,urllib2.HTTPCookieProcessor(_cook))
+            #else:
+            #    opener = urllib2.build_opener(urllib2.HTTPHandler,urllib2.HTTPCookieProcessor(_cook))
+                
+            #opener.addheaders = [('Host', host)]
+            #opener.addheaders = [('User-Agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3')]
+            #opener.addheaders = [('Referer',"http://%s/"%host)]
+            #urllib2.install_opener(opener)
+            if proxy:
+                f = DownOpener(proxies = {'http':proxy})
+            else:
+                f = DownOpener()
             return f.retrieve(url, save)
         except urllib2.URLError, e:
             if i == trycnt - 1:
@@ -126,11 +135,11 @@ class Fetch(object):
             
         urllib2.install_opener(opener)
         
-        _req = urllib2.urlopen(url ,timeout=30)
+        _req = urllib2.urlopen(url ,timeout=60)
         _data = _req.read()
         _req.close()
         if self.char:
-            return _data.decode(self.char).encode('utf-8')
+            return _data.decode(self.char, 'ignore').encode('utf-8')
         else:
             return _data
 
@@ -150,10 +159,11 @@ class Fetch(object):
         return data
 
 class NoCacheFetch(object):
-    def __init__(self,sleep = 0, headers=[], char = '', cook = None):
+    def __init__(self,sleep = 0, headers=[], char = '', cook = None, proxy = None):
         self.headers = headers
         self.sleep = sleep
         self.char = char
+        self.proxy = proxy
         
         if cook:
             self.cook = cook
@@ -163,7 +173,12 @@ class NoCacheFetch(object):
     def read(self, url):
         print "read %s\n"%url
         
-        opener = urllib2.build_opener(urllib2.HTTPHandler,urllib2.HTTPCookieProcessor(self.cook))
+        if self.proxy:
+            proxy_handler = urllib2.ProxyHandler({'http':self.proxy})
+            opener = urllib2.build_opener(proxy_handler,urllib2.HTTPCookieProcessor(self.cook))
+        else:
+            opener = urllib2.build_opener(urllib2.HTTPHandler,urllib2.HTTPCookieProcessor(self.cook))
+            
         opener.addheaders = [('Host', urlparse.urlparse(url).hostname)]
         opener.addheaders = [('User-agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3')]
         
@@ -172,14 +187,14 @@ class NoCacheFetch(object):
             
         urllib2.install_opener(opener)
         
-        _req = urllib2.urlopen(url ,timeout=30)
+        _req = urllib2.urlopen(url ,timeout=60)
         _data = _req.read()
         _req.close()
         if self.sleep:
             time.sleep(self.sleep)
             
         if self.char:
-            return _data.decode(self.char).encode('utf-8')
+            return _data.decode(self.char,'ignore').encode('utf-8')
         else:
             return _data
 
